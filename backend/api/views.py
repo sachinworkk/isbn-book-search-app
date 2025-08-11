@@ -1,6 +1,9 @@
-import requests
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
+from services.book_service import BookService
+from services.strategies.GoogleBookFetcher import GoogleBooksFetcher
+from services.strategies.ScraperBookFetcher import ScraperBookFetcher
 
 
 @api_view(["GET"])
@@ -12,24 +15,15 @@ def getData(request):
             status=400,
         )
 
-    url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}"
-    r = requests.get(url)
-    data = r.json()
+    strategies = [
+        GoogleBooksFetcher(),
+        ScraperBookFetcher(),
+    ]
 
-    if "items" not in data:
-        return Response({"error": "Book not found"}, status=400)
+    service = BookService(strategies)
 
-    try:
-        volume_info = data["items"][0]["volumeInfo"]
-    except (KeyError, IndexError, TypeError):
-        return Response({})
-
-    book_data = {
-        "title": volume_info.get("title", ""),
-        "authors": volume_info.get("authors", []),
-        "publisher": volume_info.get("publisher", ""),
-        "imageLinks": volume_info.get("imageLinks", ""),
-        "publishedDate": volume_info.get("publishedDate", ""),
-    }
+    book_data = service.get_book(isbn)
+    if not book_data:
+        return Response({"error": "Book not found"}, status=404)
 
     return Response(book_data)
