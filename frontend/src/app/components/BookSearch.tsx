@@ -1,10 +1,30 @@
 "use client";
 
+import { v4 as uuidv4 } from "uuid";
+
+interface Book {
+  id: string;
+  authors: [];
+  imageLinks: { smallThumbnail: string; thumbnail: string };
+  industryIdentifiers: { type: string; identifier: string }[];
+  publishedDate: string;
+  publisher: string;
+  title: string;
+}
+
 type BookSearchProps = {
+  isLoading: boolean;
+  isSearching: boolean;
   onBookSearch: (book: string) => void; // no params, no return value
+  books: Book[];
 };
 
-export default function BookSearch({ onBookSearch }: BookSearchProps) {
+export default function BookSearch({
+  onBookSearch,
+  books,
+  isLoading,
+  isSearching,
+}: BookSearchProps) {
   return (
     <div className="relative">
       <div className="absolute top-11 left-0 ps-3 pointer-events-none">
@@ -34,6 +54,67 @@ export default function BookSearch({ onBookSearch }: BookSearchProps) {
         onChange={(e) => onBookSearch(e.target.value)}
         required
       />
+
+      <ul className="absolute z-10 mt-1 w-full overflow-auto">
+        {!isSearching ? (
+          <div className="text-gray-500">Type a book name to search</div>
+        ) : isLoading ? (
+          <>
+            <li className="flex px-4 py-2 w-full hover:bg-gray-100 cursor-pointer text-sm">
+              <div className="flex w-full animate-pulse space-x-4">
+                <div className="w-32 h-32 bg-gray-200"></div>
+                <div className="flex-2 space-y-6 py-1">
+                  <div className="h-2 w-full rounded bg-gray-200"></div>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="col-span-2 h-2 rounded bg-gray-200"></div>
+                      <div className="col-span-1 h-2 rounded bg-gray-200"></div>
+                    </div>
+                    <div className="h-2 rounded bg-gray-200"></div>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </>
+        ) : books?.length === 0 ? (
+          <div>Books not found</div>
+        ) : (
+          books?.map((book) => (
+            <li
+              key={book.id}
+              className="flex px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+            >
+              <span>
+                <img
+                  src={
+                    book?.imageLinks?.smallThumbnail
+                      ? book?.imageLinks?.smallThumbnail
+                      : "https://placehold.co/130x200?text=Book+Cover+Not+Found"
+                  }
+                ></img>
+              </span>
+              <div className="flex-2 ml-2">
+                <span className="text-lg font-semibold">{book.title}</span>
+                <br></br>
+                <div className="book-author flex gap-1 items-baseline">
+                  <h1 className="inline-block">by</h1>
+                  {book?.authors?.map((author, index, array) => (
+                    <span className="text-gray-500 text-xs" key={uuidv4()}>
+                      {author} {index !== array.length - 1 && ","}
+                    </span>
+                  ))}
+                </div>
+
+                <span className="text-gray-500 text-xs">
+                  ISBN Number:{" "}
+                  {book?.industryIdentifiers?.[0].identifier ||
+                    book?.industryIdentifiers?.[1].identifier}
+                </span>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
     </div>
   );
 }

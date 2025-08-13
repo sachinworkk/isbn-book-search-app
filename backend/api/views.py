@@ -24,6 +24,6 @@ def getData(request):
 
     book_data = service.get_book(isbn)
     if not book_data:
-        return Response({"error": "Book not found"}, status=404)
+        return Response({"items": []}, status=404)
 
     return Response(book_data)
