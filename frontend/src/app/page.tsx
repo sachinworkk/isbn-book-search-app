@@ -38,10 +38,10 @@ export default function Home() {
     <div className="w-full h-screen flex justify-center">
       <form className="p-5 w-1/2 mt-8 flex flex-col gap-4">
         <BookSearch
-          onBookSearch={handleBookSearchAsync}
           books={books}
           isLoading={isLoading}
           isSearching={isSearching}
+          onBookSearch={handleBookSearchAsync}
         />
       </form>
     </div>
