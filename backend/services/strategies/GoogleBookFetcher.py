@@ -12,7 +12,7 @@ class GoogleBooksFetcher(BookFetcherStrategy):
         data = response_data.json()
 
         if "items" not in data or not data["items"]:
-            return {}
+            return None
 
         try:
             id = data["items"][0]["id"]
