@@ -8,12 +8,9 @@ from services.strategies.ScraperBookFetcher import ScraperBookFetcher
 
 @api_view(["GET"])
 def getData(request):
-    isbn = request.query_params.get("isbn", None)
+    isbn = request.query_params.get("isbn", "").strip()
     if not isbn:
-        return Response(
-            {"error": "ISBN query parameter is required"},
-            status=400,
-        )
+        return Response({"items": []}, status=200)  # safe default
 
     service = GoogleBooksFetcher()
 
@@ -26,12 +23,9 @@ def getData(request):
 
 @api_view(["GET"])
 def getScrappedData(request):
-    isbn = request.query_params.get("isbn", None)
+    isbn = request.query_params.get("isbn", "").strip()
     if not isbn:
-        return Response(
-            {"error": "ISBN query parameter is required"},
-            status=400,
-        )
+        return Response({"items": []}, status=200)  # safe default
 
     service = ScraperBookFetcher()
 
