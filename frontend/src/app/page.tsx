@@ -14,10 +14,32 @@ interface Book {
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
+  const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isScrapping, setIsScrapping] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
+  const handleScrappingForBook = async () => {
+    setIsLoading(true);
+    setIsScrapping(true);
+
+    try {
+      const res = await fetch(
+        `http://localhost:8000/books/scrap?isbn=${query}`
+      );
+      const data = await res.json();
+
+      setBooks(data?.items);
+    } catch (error) {
+      console.error("Error fetching books:", error);
+      setBooks([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleBookSearchAsync = async (book: string) => {
+    setQuery(book);
     setIsLoading(true);
     setIsSearching(true);
 
@@ -41,7 +63,9 @@ export default function Home() {
           books={books}
           isLoading={isLoading}
           isSearching={isSearching}
+          isScrapping={isScrapping}
           onBookSearch={handleBookSearchAsync}
+          onScrapForBook={handleScrappingForBook}
         />
       </form>
     </div>

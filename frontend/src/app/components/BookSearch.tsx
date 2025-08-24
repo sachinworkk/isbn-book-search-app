@@ -14,15 +14,19 @@ interface Book {
 
 type BookSearchProps = {
   isLoading: boolean;
+  isScrapping: boolean;
+  onScrapForBook: () => void;
   isSearching: boolean;
-  onBookSearch: (book: string) => void; // no params, no return value
+  onBookSearch: (book: string) => void;
   books: Book[];
 };
 
 export default function BookSearch({
   onBookSearch,
+  onScrapForBook,
   books,
   isLoading,
+  isScrapping,
   isSearching,
 }: BookSearchProps) {
   return (
@@ -76,8 +80,16 @@ export default function BookSearch({
               </div>
             </li>
           </>
-        ) : books?.length === 0 ? (
-          <div>Books not found</div>
+        ) : books?.length === 0 && !isScrapping ? (
+          <div>
+            <h1>Book not found</h1>
+            <button
+              className="bg-blue-500 py-2 px-4 rounded"
+              onClick={(e) => onScrapForBook()}
+            >
+              Try scrapping
+            </button>
+          </div>
         ) : (
           books?.map((book) => (
             <li
