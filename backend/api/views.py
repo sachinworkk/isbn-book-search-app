@@ -15,15 +15,28 @@ def getData(request):
             status=400,
         )
 
-    strategies = [
-        GoogleBooksFetcher(),
-        ScraperBookFetcher(),
-    ]
+    service = GoogleBooksFetcher()
 
-    service = BookService(strategies)
-
-    book_data = service.get_book(isbn)
+    book_data = service.fetch(isbn)
     if not book_data:
         return Response({"items": []}, status=404)
+
+    return Response(book_data)
+
+
+@api_view(["GET"])
+def getScrappedData(request):
+    isbn = request.query_params.get("isbn", None)
+    if not isbn:
+        return Response(
+            {"error": "ISBN query parameter is required"},
+            status=400,
+        )
+
+    service = ScraperBookFetcher()
+
+    book_data = service.fetch(isbn)
+    if not book_data:
+        return Response({"items": [], "error": "Failed to scrape"}, status=500)
 
     return Response(book_data)

@@ -7,7 +7,7 @@ class ScraperBookFetcher(BookFetcherStrategy):
 
     def fetch(self, isbn: str):
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = p.chromium.launch(headless=False)
             page = browser.new_page()
 
             url = f"https://openlibrary.org/isbn/{isbn}"
