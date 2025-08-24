@@ -1,10 +1,8 @@
 "use client";
 
-import { v4 as uuidv4 } from "uuid";
-
 interface Book {
   id: string;
-  authors: [];
+  authors: string[];
   imageLinks: { smallThumbnail: string; thumbnail: string };
   industryIdentifiers: { type: string; identifier: string }[];
   publishedDate: string;
@@ -13,21 +11,72 @@ interface Book {
 }
 
 type BookSearchProps = {
-  isLoading: boolean;
-  isScrapping: boolean;
-  onScrapForBook: () => void;
-  isSearching: boolean;
-  onBookSearch: (book: string) => void;
+  state: SearchState;
   books: Book[];
+  onScrapForBook: () => void;
+  onBookSearch: (book: string) => void;
 };
+
+type SearchState = "idle" | "loading" | "success" | "notFound" | "scraping";
+
+function LoadingSkeleton() {
+  return (
+    <li className="flex px-4 py-2 w-full hover:bg-gray-100 cursor-pointer text-sm">
+      <div className="flex w-full animate-pulse space-x-4">
+        <div className="w-32 h-32 bg-gray-200"></div>
+        <div className="flex-2 space-y-6 py-1">
+          <div className="h-2 w-full rounded bg-gray-200"></div>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 h-2 rounded bg-gray-200"></div>
+              <div className="col-span-1 h-2 rounded bg-gray-200"></div>
+            </div>
+            <div className="h-2 rounded bg-gray-200"></div>
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function BookItem({ book }: { book: Book }) {
+  return (
+    <li className="flex px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm">
+      <img
+        src={
+          book?.imageLinks?.smallThumbnail ||
+          "https://placehold.co/130x200?text=Book+Cover+Not+Found"
+        }
+        alt={book?.title}
+        className="w-20 h-auto"
+      />
+      <div className="flex-2 ml-2">
+        <span className="text-lg font-semibold">{book.title}</span>
+        <div className="book-author flex gap-1 items-baseline text-xs text-gray-500">
+          <span>by</span>
+          {book?.authors.map((author, idx) => (
+            <span key={idx}>
+              {author}
+              {idx !== book?.authors.length - 1 && ","}
+            </span>
+          ))}
+        </div>
+        <span className="text-gray-500 text-xs">
+          ISBN Number:{" "}
+          {book.industryIdentifiers?.[0]?.identifier ||
+            book.industryIdentifiers?.[1]?.identifier ||
+            "N/A"}
+        </span>
+      </div>
+    </li>
+  );
+}
 
 export default function BookSearch({
   onBookSearch,
   onScrapForBook,
   books,
-  isLoading,
-  isScrapping,
-  isSearching,
+  state,
 }: BookSearchProps) {
   return (
     <div className="relative">
@@ -48,84 +97,47 @@ export default function BookSearch({
           />
         </svg>
       </div>
+
       <input
         type="search"
         id="default-search"
-        className="block w-full mt-6 p-4 ps-10 text-sm border
-         border-gray-300 rounded-md bg-gray-50 
-        focus:border-gray-400 focus:outline-none focus:shadow-xl"
+        className="block w-full mt-6 p-4 ps-10 text-sm border border-gray-300 rounded-md bg-gray-50 focus:border-gray-400 focus:outline-none focus:shadow-xl"
         placeholder="Search Books"
-        onChange={(e) => onBookSearch(e.target.value)}
-        required
+        onChange={(e) => {
+          const value = e.target.value;
+          if (value.trim() === "") {
+            onBookSearch("");
+            return;
+          }
+          onBookSearch(value);
+        }}
       />
 
-      <ul className="absolute z-10 mt-1 w-full overflow-auto">
-        {!isSearching ? (
-          <div className="text-gray-500">Type a book name to search</div>
-        ) : isLoading ? (
-          <>
-            <li className="flex px-4 py-2 w-full hover:bg-gray-100 cursor-pointer text-sm">
-              <div className="flex w-full animate-pulse space-x-4">
-                <div className="w-32 h-32 bg-gray-200"></div>
-                <div className="flex-2 space-y-6 py-1">
-                  <div className="h-2 w-full rounded bg-gray-200"></div>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="col-span-2 h-2 rounded bg-gray-200"></div>
-                      <div className="col-span-1 h-2 rounded bg-gray-200"></div>
-                    </div>
-                    <div className="h-2 rounded bg-gray-200"></div>
-                  </div>
-                </div>
-              </div>
-            </li>
-          </>
-        ) : books?.length === 0 && !isScrapping ? (
-          <div>
+      <ul className="absolute z-10 mt-1 w-full max-h-96 overflow-auto">
+        {state === "idle" && (
+          <div className="text-gray-500 px-4 py-2">
+            Type a book name to search
+          </div>
+        )}
+
+        {state === "loading" && <LoadingSkeleton />}
+
+        {state === "notFound" && (
+          <div className="px-4 py-2">
             <h1>Book not found</h1>
             <button
-              className="bg-blue-500 py-2 px-4 rounded"
-              onClick={(e) => onScrapForBook()}
+              className="bg-blue-500 py-2 px-4 mt-2 rounded text-white"
+              onClick={onScrapForBook}
             >
-              Try scrapping
+              Try scraping
             </button>
           </div>
-        ) : (
-          books?.map((book) => (
-            <li
-              key={book.id}
-              className="flex px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-            >
-              <span>
-                <img
-                  src={
-                    book?.imageLinks?.smallThumbnail
-                      ? book?.imageLinks?.smallThumbnail
-                      : "https://placehold.co/130x200?text=Book+Cover+Not+Found"
-                  }
-                ></img>
-              </span>
-              <div className="flex-2 ml-2">
-                <span className="text-lg font-semibold">{book.title}</span>
-                <br></br>
-                <div className="book-author flex gap-1 items-baseline">
-                  <h1 className="inline-block">by</h1>
-                  {book?.authors?.map((author, index, array) => (
-                    <span className="text-gray-500 text-xs" key={uuidv4()}>
-                      {author} {index !== array.length - 1 && ","}
-                    </span>
-                  ))}
-                </div>
-
-                <span className="text-gray-500 text-xs">
-                  ISBN Number:{" "}
-                  {book?.industryIdentifiers?.[0].identifier ||
-                    book?.industryIdentifiers?.[1].identifier}
-                </span>
-              </div>
-            </li>
-          ))
         )}
+
+        {state === "scraping" && <LoadingSkeleton />}
+
+        {state === "success" &&
+          books.map((book) => <BookItem key={book.id} book={book} />)}
       </ul>
     </div>
   );
