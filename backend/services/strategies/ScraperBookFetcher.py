@@ -7,41 +7,49 @@ class ScraperBookFetcher(BookFetcherStrategy):
 
     def fetch(self, isbn: str):
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             page = browser.new_page()
 
             url = f"https://openlibrary.org/isbn/{isbn}"
             page.goto(url)
 
             try:
-                title = page.inner_text("h1.work-title")
+                contentHead = page.locator("#contentHead h1").inner_text()
+                if contentHead == "404 - Page Not Found":
+                    return {"items": []}
             except:
-                title = "Not found"
+                print("excepted")
+                try:
+                    title = page.inner_text("h1.work-title")
+                except:
+                    title = "Not found"
 
-            try:
-                author = page.inner_text("a[itemprop='author']")
-            except:
-                author = "Unknown"
+                try:
+                    author = page.inner_text("a[itemprop='author']")
+                except:
+                    author = "Unknown"
 
-            try:
-                description = page.inner_text("div#description")  # may not always exist
-            except:
-                description = "No description available"
+                try:
+                    description = page.inner_text(
+                        "div#description"
+                    )  # may not always exist
+                except:
+                    description = "No description available"
 
-            try:
-                # wait for cover image to appear
-                page.wait_for_selector("img.cover")
+                try:
+                    # wait for cover image to appear
+                    page.wait_for_selector("img.cover")
 
-                # get the image src
-                cover_src = page.get_attribute("img.cover", "src")
+                    # get the image src
+                    cover_src = page.get_attribute("img.cover", "src")
 
-                # OpenLibrary sometimes uses protocol-relative URLs ("//...")
-                if cover_src and cover_src.startswith("//"):
-                    cover_src = "https:" + cover_src
-                    print(cover_src)
+                    # OpenLibrary sometimes uses protocol-relative URLs ("//...")
+                    if cover_src and cover_src.startswith("//"):
+                        cover_src = "https:" + cover_src
+                        print(cover_src)
 
-            except:
-                cover_src = ""
+                except:
+                    cover_src = ""
 
             browser.close()
 
