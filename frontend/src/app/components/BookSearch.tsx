@@ -1,14 +1,6 @@
 "use client";
 
-interface Book {
-  id: string;
-  authors: string[];
-  imageLinks: { smallThumbnail: string; thumbnail: string };
-  industryIdentifiers: { type: string; identifier: string }[];
-  publishedDate: string;
-  publisher: string;
-  title: string;
-}
+import { Book, SearchState } from "../../types";
 
 type BookSearchProps = {
   state: SearchState;
@@ -16,8 +8,6 @@ type BookSearchProps = {
   onScrapForBook: () => void;
   onBookSearch: (book: string) => void;
 };
-
-type SearchState = "idle" | "loading" | "success" | "notFound" | "scraping";
 
 function LoadingSkeleton() {
   return (
@@ -78,6 +68,13 @@ export default function BookSearch({
   books,
   state,
 }: BookSearchProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onBookSearch(e.target.value.trim());
+  };
+
+  const messageCardStyle =
+    "absolute z-10 mt-1 w-full  px-4 py-3 text-center text-gray-500";
+
   return (
     <div className="relative">
       <div className="absolute top-11 left-0 ps-3 pointer-events-none">
@@ -103,42 +100,50 @@ export default function BookSearch({
         id="default-search"
         className="block w-full mt-6 p-4 ps-10 text-sm border border-gray-300 rounded-md bg-gray-50 focus:border-gray-400 focus:outline-none focus:shadow-xl"
         placeholder="Search Books"
-        onChange={(e) => {
-          const value = e.target.value;
-          if (value.trim() === "") {
-            onBookSearch("");
-            return;
-          }
-          onBookSearch(value);
-        }}
+        onChange={handleChange}
       />
 
-      <ul className="absolute z-10 mt-1 w-full max-h-96 overflow-auto">
-        {state === "idle" && (
-          <div className="text-gray-500 px-4 py-2">
-            Type a book name to search
-          </div>
-        )}
+      {state === "idle" && (
+        <div className={`${messageCardStyle}`}>
+          Type the book ISBN to search
+        </div>
+      )}
 
-        {state === "loading" && <LoadingSkeleton />}
+      {state === "notFound" && (
+        <div
+          className={`${messageCardStyle}  mt-2 px-4 py-3 border border-yellow-300 bg-yellow-50 rounded-lg flex flex-col items-center text-center space-y-2`}
+        >
+          <p className="text-yellow-800 font-semibold text-lg">
+            Book not found
+          </p>
+          <button
+            className="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white text-sm font-medium shadow hover:bg-blue-600 transition-colors"
+            onClick={onScrapForBook}
+          >
+            Try scraping
+          </button>
+        </div>
+      )}
 
-        {state === "notFound" && (
-          <div className="px-4 py-2">
-            <h1>Book not found</h1>
-            <button
-              className="bg-blue-500 py-2 px-4 mt-2 rounded text-white"
-              onClick={onScrapForBook}
-            >
-              Try scraping
-            </button>
-          </div>
-        )}
+      {state === "scrapingNotFound" && (
+        <div className="mt-2 px-4 py-2 border border-red-300 bg-red-50 rounded-lg">
+          <h1 className="text-red-600 font-medium">Still no luck :(</h1>
+          <p className="text-gray-600 text-sm">
+            We couldn’t find this book even after scraping external sources.
+          </p>
+        </div>
+      )}
 
-        {state === "scraping" && <LoadingSkeleton />}
-
-        {state === "success" &&
-          books.map((book) => <BookItem key={book.id} book={book} />)}
-      </ul>
+      {/* Books list */}
+      {(state === "success" || state === "loading" || state === "scraping") && (
+        <ul className="absolute z-10 mt-1 w-full max-h-96 overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg divide-y divide-gray-100 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-500">
+          {state === "loading" || state === "scraping" ? (
+            <LoadingSkeleton />
+          ) : (
+            books.map((book) => <BookItem key={book.id} book={book} />)
+          )}
+        </ul>
+      )}
     </div>
   );
 }
