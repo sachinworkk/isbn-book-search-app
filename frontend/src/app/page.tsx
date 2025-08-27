@@ -1,7 +1,10 @@
 "use client";
 import { useReducer } from "react";
+
 import { Book, SearchState } from "../types";
+
 import BookSearch from "./components/BookSearch";
+import { PLACEHOLDERS } from "@/constants/labels";
 
 interface State {
   books: Book[];
@@ -112,7 +115,7 @@ export default function Home() {
           </svg>
 
           <h1 className="text-green-800 font-semibold text-lg">
-            ISBN Book Search App
+            {PLACEHOLDERS.BOOK_SEARCH}
           </h1>
         </div>
 

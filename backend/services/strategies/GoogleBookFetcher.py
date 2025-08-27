@@ -1,11 +1,12 @@
 import requests
 
+from django.conf import settings
 from services.strategies.BookFetcherStrategy import BookFetcherStrategy
 
 
 class GoogleBooksFetcher(BookFetcherStrategy):
     def fetch(self, isbn: str) -> dict:
-        url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}"
+        url = f"{settings.BOOK_API_URL}?q=isbn:{isbn}"
 
         response_data = requests.get(url)
 
@@ -19,7 +20,9 @@ class GoogleBooksFetcher(BookFetcherStrategy):
             volume_info = data["items"][0]["volumeInfo"]
             author = volume_info.get("authors", "")[0]
             category = volume_info.get("categories", "")[0]
-            similarUrl = f"https://www.googleapis.com/books/v1/volumes?q=inauthor:{author}subject:{category}"
+            similarUrl = (
+                f"{settings.BOOK_API_URL}?q=inauthor:{author}subject:{category}"
+            )
 
             try:
                 similarRes = requests.get(similarUrl)
