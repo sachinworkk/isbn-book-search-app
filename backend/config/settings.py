@@ -127,3 +127,8 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Books URL
+BOOK_SCRAPER_URL = "https://openlibrary.org/isbn/"
+BOOK_API_URL = "https://www.googleapis.com/books/v1/volumes"
