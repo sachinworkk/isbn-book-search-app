@@ -1,7 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from services.book_service import BookService
 from services.strategies.GoogleBookFetcher import GoogleBooksFetcher
 from services.strategies.ScraperBookFetcher import ScraperBookFetcher
 

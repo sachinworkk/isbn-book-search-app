@@ -2,6 +2,9 @@
 
 import { Book, SearchState } from "../../types";
 
+import { PLACEHOLDERS } from "../../constants/labels";
+import { VALIDATION_MESSAGE } from "../../constants/validation";
+
 type BookSearchProps = {
   state: SearchState;
   books: Book[];
@@ -104,9 +107,7 @@ export default function BookSearch({
       />
 
       {state === "idle" && (
-        <div className={`${messageCardStyle}`}>
-          Type the book ISBN to search
-        </div>
+        <span className={`${messageCardStyle}`}>{PLACEHOLDERS.ISBN_INPUT}</span>
       )}
 
       {state === "notFound" && (
@@ -114,22 +115,24 @@ export default function BookSearch({
           className={`${messageCardStyle}  mt-2 px-4 py-3 border border-yellow-300 bg-yellow-50 rounded-lg flex flex-col items-center text-center space-y-2`}
         >
           <p className="text-yellow-800 font-semibold text-lg">
-            Book not found
+            {VALIDATION_MESSAGE.BOOK_NOT_FOUND}
           </p>
           <button
             className="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white text-sm font-medium shadow hover:bg-blue-600 transition-colors"
             onClick={onScrapForBook}
           >
-            Try scraping
+            {PLACEHOLDERS.SCRAPING_BUTTON}
           </button>
         </div>
       )}
 
       {state === "scrapingNotFound" && (
         <div className="mt-2 px-4 py-2 border border-red-300 bg-red-50 rounded-lg">
-          <h1 className="text-red-600 font-medium">Still no luck :(</h1>
+          <h1 className="text-red-600 font-medium">
+            {VALIDATION_MESSAGE.NO_LUCK}
+          </h1>
           <p className="text-gray-600 text-sm">
-            We couldn’t find this book even after scraping external sources.
+            {VALIDATION_MESSAGE.SCRAPING_NOT_FOUND}
           </p>
         </div>
       )}
