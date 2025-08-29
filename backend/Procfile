@@ -1,2 +1,2 @@
-release: playwright install --with-deps chromium
+release: playwright install --with-deps webkit
 web: gunicorn config.wsgi
