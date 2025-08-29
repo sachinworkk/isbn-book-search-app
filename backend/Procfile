@@ -1,2 +1,2 @@
-release: playwright install --with-deps webkit
-web: gunicorn config.wsgi
+release: playwright install --with-deps chromium
+web: gunicorn config.wsgi --workers=1 --threads=1 --timeout=120
