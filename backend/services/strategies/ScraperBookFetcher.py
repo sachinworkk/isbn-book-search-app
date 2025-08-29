@@ -9,7 +9,7 @@ class ScraperBookFetcher(BookFetcherStrategy):
 
     def fetch(self, isbn: str):
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = p.webkit.launch(headless=True)
             page = browser.new_page()
 
             url = settings.BOOK_SCRAPER_URL + isbn
@@ -22,20 +22,15 @@ class ScraperBookFetcher(BookFetcherStrategy):
             except:
                 try:
                     title = page.inner_text(SCRAPPING_ELEMENTS["title"])
+                    print(title)
                 except:
                     title = "Not found"
 
                 try:
                     author = page.inner_text(SCRAPPING_ELEMENTS["author"])
+                    print(author)
                 except:
                     author = "Unknown"
-
-                try:
-                    description = page.inner_text(
-                        "div#description"
-                    )  # may not always exist
-                except:
-                    description = "No description available"
 
                 try:
                     # wait for cover image to appear
@@ -61,7 +56,6 @@ class ScraperBookFetcher(BookFetcherStrategy):
                         "industryIdentifiers": [{"identifier": isbn}],
                         "title": title,
                         "authors": [author],
-                        "description": description,
                         "imageLinks": {"smallThumbnail": cover_src},
                     }
                 ]
