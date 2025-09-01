@@ -137,20 +137,48 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+# Global log level
+LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
+
+# Per-module overrides (comma-separated list in env)
+DEBUG_MODULES = env.list("DJANGO_DEBUG_MODULES", default=[""])
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
+    "formatters": {
+        "verbose": {
+            "format": "[{levelname}] {asctime} {name} {message}",
+            "style": "{",
         },
     },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": LOG_LEVEL,
+    },
     "loggers": {
+        # Django default
         "django": {
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "WARNING",
             "propagate": True,
+        },
+        # Override specific modules if listed in env
+        **{
+            module.strip(): {
+                "handlers": ["console"],
+                "level": "DEBUG",
+                "propagate": False,
+            }
+            for module in DEBUG_MODULES
+            if module.strip()
         },
     },
 }

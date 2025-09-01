@@ -57,7 +57,9 @@ export default function Home() {
     dispatch({ type: "START_SEARCH", query: book });
 
     try {
-      const res = await fetch(`http://localhost:8000/books/?isbn=${book}`);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/books/?isbn=${book}`
+      );
       const data = await res.json();
 
       if (!data?.items || data.items.length === 0) {
@@ -76,7 +78,7 @@ export default function Home() {
 
     try {
       const res = await fetch(
-        `http://localhost:8000/books/scrap?isbn=${state.query}`
+        `${process.env.NEXT_PUBLIC_API_URL}/books/scrap?isbn=${state.query}`
       );
       const data = await res.json();
 
