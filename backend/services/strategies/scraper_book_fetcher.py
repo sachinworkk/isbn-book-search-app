@@ -2,7 +2,7 @@ import logging
 from playwright.sync_api import sync_playwright
 from config.constants import SCRAPPING_ELEMENTS
 from django.conf import settings
-from services.strategies.BookFetcherStrategy import BookFetcherStrategy
+from services.strategies.book_fetcher import BookFetcherStrategy
 
 logger = logging.getLogger(__name__)  # module-based logger
 

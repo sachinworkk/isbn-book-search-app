@@ -1,8 +1,8 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from services.strategies.GoogleBookFetcher import GoogleBooksFetcher
-from services.strategies.ScraperBookFetcher import ScraperBookFetcher
+from services.strategies.google_book_fetcher import GoogleBookFetcher
+from services.strategies.scraper_book_fetcher import ScraperBookFetcher
 
 
 @api_view(["GET"])
@@ -11,7 +11,7 @@ def getData(request):
     if not isbn:
         return Response({"items": []}, status=200)  # safe default
 
-    service = GoogleBooksFetcher()
+    service = GoogleBookFetcher()
 
     book_data = service.fetch(isbn)
     if not book_data:

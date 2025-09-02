@@ -1,12 +1,12 @@
 import logging
 import requests
 from django.conf import settings
-from services.strategies.BookFetcherStrategy import BookFetcherStrategy
+from services.strategies.book_fetcher import BookFetcherStrategy
 
 logger = logging.getLogger(__name__)  # module-based logger
 
 
-class GoogleBooksFetcher(BookFetcherStrategy):
+class GoogleBookFetcher(BookFetcherStrategy):
     def fetch(self, isbn: str) -> dict:
         url = f"{settings.BOOK_API_URL}?q=isbn:{isbn}"
         logger.info("Fetching book for ISBN: %s", isbn)
