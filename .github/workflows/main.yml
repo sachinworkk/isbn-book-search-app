@@ -1,0 +1,55 @@
+name: CI/CD Django + Next.js
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  backend:
+    name: Test & Deploy Django Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Cache pip dependencies
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('BACKEND/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 3. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      # 4. Install dependencies
+      - name: Install dependencies
+        working-directory: BACKEND
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install chromium
+
+      # 5. Run Django unit tests
+      - name: Run Django unit tests
+        working-directory: BACKEND
+        run: python manage.py test
+
+      # 6. Set Railway environment
+      - name: Set Railway environment
+        uses: railwayapp/railway-action@v1
+        with:
+          railwayToken: ${{ secrets.RAILWAY_API_KEY }}
+
+      # 7. Deploy to Railway (only if tests pass)
+      - name: Deploy to Railway
+        working-directory: BACKEND
+        run: railway up --production
