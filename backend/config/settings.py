@@ -158,14 +158,9 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
-        "file": {
-            "class": "logging.FileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/django.log"),
-            "formatter": "verbose",
-        },
     },
     "root": {
-        "handlers": ["console", "file"],
+        "handlers": ["console"],
         "level": LOG_LEVEL,
     },
     "loggers": {
@@ -178,7 +173,7 @@ LOGGING = {
         # Override specific modules if listed in env
         **{
             module.strip(): {
-                "handlers": ["console", "file"],
+                "handlers": ["console"],
                 "level": "DEBUG",
                 "propagate": False,
             }
