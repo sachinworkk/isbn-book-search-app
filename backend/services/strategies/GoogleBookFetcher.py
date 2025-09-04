@@ -1,18 +1,27 @@
+import logging
 import requests
-
 from django.conf import settings
 from services.strategies.BookFetcherStrategy import BookFetcherStrategy
+
+logger = logging.getLogger(__name__)  # module-based logger
 
 
 class GoogleBooksFetcher(BookFetcherStrategy):
     def fetch(self, isbn: str) -> dict:
         url = f"{settings.BOOK_API_URL}?q=isbn:{isbn}"
+        logger.info("Fetching book for ISBN: %s", isbn)
 
-        response_data = requests.get(url)
-
-        data = response_data.json()
+        try:
+            response_data = requests.get(url, timeout=10)
+            response_data.raise_for_status()
+            data = response_data.json()
+            logger.debug("Google Books API response: %s", data)
+        except requests.RequestException as e:
+            logger.error("Failed to fetch Google Books API for ISBN %s: %s", isbn, e)
+            return {}
 
         if "items" not in data or not data["items"]:
+            logger.warning("No book items found for ISBN: %s", isbn)
             return None
 
         try:
@@ -20,14 +29,17 @@ class GoogleBooksFetcher(BookFetcherStrategy):
             volume_info = data["items"][0]["volumeInfo"]
             author = volume_info.get("authors", "")[0]
             category = volume_info.get("categories", "")[0]
-            similarUrl = (
-                f"{settings.BOOK_API_URL}?q=inauthor:{author}subject:{category}"
+            similar_url = (
+                f"{settings.BOOK_API_URL}?q=inauthor:{author}+subject:{category}"
             )
 
             try:
-                similarRes = requests.get(similarUrl)
-                similarData = similarRes.json()
-            except (KeyError, IndexError, TypeError):
+                similar_res = requests.get(similar_url)
+                similar_res.raise_for_status()
+                similar_data = similar_res.json()
+                logger.debug("Similar books API response: %s", similar_data)
+            except (requests.RequestException, KeyError, IndexError, TypeError) as e:
+                logger.warning("Failed to fetch similar books for ISBN %s: %s", isbn, e)
                 return {
                     "id": id,
                     "title": volume_info.get("title", ""),
@@ -38,22 +50,25 @@ class GoogleBooksFetcher(BookFetcherStrategy):
                     "industryIdentifiers": volume_info.get("industryIdentifiers", ""),
                 }
 
-        except (KeyError, IndexError, TypeError):
+        except (KeyError, IndexError, TypeError) as e:
+            logger.error("Error parsing book data for ISBN %s: %s", isbn, e)
             return {}
 
-        similar_book_data = list(
-            map(
-                lambda data: {
-                    "id": data.get("id", ""),
-                    "title": data["volumeInfo"].get("title", ""),
-                    "authors": data["volumeInfo"].get("authors", []),
-                    "publisher": data["volumeInfo"].get("publisher", ""),
-                    "imageLinks": data["volumeInfo"].get("imageLinks", ""),
-                    "publishedDate": data["volumeInfo"].get("publishedDate", ""),
-                    "industryIdentifiers": volume_info.get("industryIdentifiers", ""),
-                },
-                similarData["items"],
-            )
+        similar_book_data = [
+            {
+                "id": item.get("id", ""),
+                "title": item["volumeInfo"].get("title", ""),
+                "authors": item["volumeInfo"].get("authors", []),
+                "publisher": item["volumeInfo"].get("publisher", ""),
+                "imageLinks": item["volumeInfo"].get("imageLinks", ""),
+                "publishedDate": item["volumeInfo"].get("publishedDate", ""),
+                "industryIdentifiers": volume_info.get("industryIdentifiers", ""),
+            }
+            for item in similar_data.get("items", [])
+        ]
+
+        logger.info(
+            "Fetched %d similar books for ISBN %s", len(similar_book_data), isbn
         )
 
         return {
