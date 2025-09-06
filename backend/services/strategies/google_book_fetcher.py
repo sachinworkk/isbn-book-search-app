@@ -29,9 +29,7 @@ class GoogleBookFetcher(BookFetcherStrategy):
             volume_info = data["items"][0]["volumeInfo"]
             author = volume_info.get("authors", "")[0]
             category = volume_info.get("categories", "")[0]
-            similar_url = (
-                f"{settings.BOOK_API_URL}?q=inauthor:{author}+subject:{category}"
-            )
+            similar_url = f"{settings.BOOK_API_URL}?q=subject:{category}"
 
             try:
                 similar_res = requests.get(similar_url)
@@ -41,18 +39,28 @@ class GoogleBookFetcher(BookFetcherStrategy):
             except (requests.RequestException, KeyError, IndexError, TypeError) as e:
                 logger.warning("Failed to fetch similar books for ISBN %s: %s", isbn, e)
                 return {
-                    "id": id,
-                    "title": volume_info.get("title", ""),
-                    "authors": volume_info.get("authors", []),
-                    "publisher": volume_info.get("publisher", ""),
-                    "imageLinks": volume_info.get("imageLinks", ""),
-                    "publishedDate": volume_info.get("publishedDate", ""),
-                    "industryIdentifiers": volume_info.get("industryIdentifiers", ""),
+                    "items": [
+                        {
+                            "id": id,
+                            "title": volume_info.get("title", ""),
+                            "authors": volume_info.get("authors", []),
+                            "publisher": volume_info.get("publisher", ""),
+                            "imageLinks": volume_info.get("imageLinks", ""),
+                            "publishedDate": volume_info.get("publishedDate", ""),
+                            "industryIdentifiers": volume_info.get(
+                                "industryIdentifiers", ""
+                            ),
+                        }
+                    ]
                 }
 
         except (KeyError, IndexError, TypeError) as e:
             logger.error("Error parsing book data for ISBN %s: %s", isbn, e)
             return {}
+
+        similar_items = similar_data.get("items", [])
+        if not similar_items:
+            logger.info("No similar books found for ISBN %s", isbn)
 
         similar_book_data = [
             {
@@ -64,7 +72,7 @@ class GoogleBookFetcher(BookFetcherStrategy):
                 "publishedDate": item["volumeInfo"].get("publishedDate", ""),
                 "industryIdentifiers": volume_info.get("industryIdentifiers", ""),
             }
-            for item in similar_data.get("items", [])
+            for item in similar_items
         ]
 
         logger.info(
