@@ -12,23 +12,19 @@ _browser = None
 
 
 def get_browser():
-    global _playwright, _browser
-    if _playwright is None:
-        logger.info("Starting Playwright...")
-        _playwright = sync_playwright().start()
-    if _browser is None:
-        logger.info("Launching Chromium browser (headless)...")
-        _browser = _playwright.chromium.launch(
-            headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"]
-        )
-    return _browser
+    playwright = sync_playwright().start()
+    browser = playwright.chromium.launch(
+        headless=True,
+        args=["--no-sandbox", "--disable-dev-shm-usage"],
+    )
+    return browser, playwright
 
 
 class ScraperBookFetcher(BookFetcherStrategy):
     def fetch(self, isbn: str):
         logger.info("Scraping book info for ISBN: %s", isbn)
 
-        browser = get_browser()
+        browser, playwright = get_browser()
         page = browser.new_page()
 
         try:
@@ -41,7 +37,6 @@ class ScraperBookFetcher(BookFetcherStrategy):
                 content_head = page.locator(SCRAPPING_ELEMENTS["notFound"]).inner_text()
                 if content_head == "404 - Page Not Found":
                     logger.warning("Book not found (404) for ISBN: %s", isbn)
-                    page.close()
                     return {"items": []}
             except Exception:
                 logger.debug("No explicit 404 message found for ISBN: %s", isbn)
@@ -72,11 +67,12 @@ class ScraperBookFetcher(BookFetcherStrategy):
 
             except Exception as e:
                 logger.error("Error scraping content for ISBN %s: %s", isbn, e)
-                page.close()
                 return {"items": []}
 
         finally:
             page.close()
+            browser.close()
+            playwright.stop()
 
         logger.info("Successfully scraped book for ISBN: %s", isbn)
 

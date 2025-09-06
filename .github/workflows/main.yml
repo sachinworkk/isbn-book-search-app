@@ -15,6 +15,7 @@ jobs:
       CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
       DJANGO_LOG_LEVEL: "INFO"
       DJANGO_DEBUG_MODULES: "services.strategies.GoogleBookFetcher"
+      DJANGO_SETTINGS_MODULE: config.settings
 
     steps:
       # 1. Checkout code
@@ -47,7 +48,7 @@ jobs:
       # 5. Run Django unit tests
       - name: Run Django unit tests
         working-directory: backend
-        run: python manage.py test
+        run: pytest --ds=config.settings
 
       # 6. Deploy to Railway only if tests pass
       - name: Deploy to Railway
